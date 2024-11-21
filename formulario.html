@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulário de Extensão</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <style>
+    /* Estilos básicos para o formulário */
+    #form-extensao {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background-color: #f9f9f9;
+      font-family: Arial, sans-serif;
+    }
+     @media (min-width: 992px) {
+        .pagina ul, .noticia ul, .pagina ol, .noticia ol {
+            padding: 0;
+        }
+    }
+
+    #form-extensao p {
+      margin: -5px 0 0 0;
+    }
+
+    /* Estilos para os rótulos */
+    #form-extensao label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #00753b;
+    }
+    /* Estilos para os campos de entrada */
+    #form-extensao input[type="text"],
+    #form-extensao input[type="number"],
+    #form-extensao input[type="date"],
+    #form-extensao select,
+    #form-extensao textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+      background-color: #fff;
+      color: #333;
+    }
+    #form-extensao input[type="date"]{
+        width: auto;
+    }
+
+    /* Estilos específicos para textarea */
+    #form-extensao textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    /* Estilos para o botão */
+    #form-extensao button[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      background-color: #00753b;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 10px;
+    }
+    #form-extensao button[type="submit"]:hover {
+      background-color: #005c2f;
+    }
+    /* Estilos para os inputs de rádio */
+    #form-extensao input[type="radio"] {
+      margin-right: 10px;
+    }
+    /* Alinhamento do campo Modalidade */
+    #modalidade-section {
+      margin-bottom: 20px;
+    }
+    /* Estilos para o mapa */
+    #map {
+      height: 300px;
+      width: 100%;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+    }
+    /* Responsividade para telas menores */
+    @media (max-width: 768px) {
+      #form-extensao {
+        padding: 15px;
+      }
+      #form-extensao button[type="submit"] {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <script>
+    let latitude, longitude, marker;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var tipoExtensao = document.getElementById('tipo-extensao');
+      var modalidadeSection = document.getElementById('modalidade-section');
+      var modalidadeInputs = document.getElementsByName('modalidade');
+      
+      tipoExtensao.addEventListener('change', function () {
+        if (tipoExtensao.value === 'Projeto de Prestação de serviço') {
+          modalidadeSection.style.display = 'block';
+        } else {
+          modalidadeSection.style.display = 'none';
+          modalidadeInputs.forEach(input => input.checked = false);
+        }
+      });
+      // Inicializa o mapa
+      initMap();
+    });
+
+    function initMap() {
+      const map = L.map('map').setView([-23.2927, -51.1732], 12); // Londrina
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+      }).addTo(map);
+
+      // Adiciona a funcionalidade de pesquisa
+      L.Control.geocoder({
+        defaultMarkGeocode: false
+      }).on('markgeocode', function(e) {
+        const latlng = e.geocode.center;
+        map.setView(latlng, 15);
+
+        // Adiciona um marcador na posição pesquisada
+        if (marker) {
+          map.removeLayer(marker);
+        }
+        marker = L.marker(latlng).addTo(map)
+          .bindPopup(e.geocode.name)
+          .openPopup();
+
+        latitude = latlng.lat;
+        longitude = latlng.lng;
+      }).addTo(map);
+
+      // Adiciona um listener para capturar o clique no mapa e adicionar o marcador
+      map.on('click', (event) => {
+        latitude = event.latlng.lat;
+        longitude = event.latlng.lng;
+
+        if (marker) {
+          map.removeLayer(marker);
+        }
+
+        marker = L.marker([latitude, longitude]).addTo(map)
+          .bindPopup(`Localização selecionada`)
+          .openPopup();
+      });
+    }
+
+    // Função que envia dados para o Google Sheets via Google Apps Script
+    function enviarDados(formData) {
+      const url = 'https://script.google.com/macros/s/AKfycbyj6nmv5NqIBWfEYJi63NxprVDnqgbAgimhjldlUcDyDRR_u9VQYLxzAT-oJ8SWflgr/exec';
+
+      const formBody = new URLSearchParams(formData).toString();
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formBody
+      })
+      .then(response => response.text())
+      .then(result => {
+        console.log('Sucesso:', result);
+        alert('Formulário enviado com sucesso! Obrigado por contribuir :)');
+      })
+      .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao enviar o formulário.');
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const telefoneInput = document.getElementById('telefone');
+
+      telefoneInput.addEventListener('input', function(event) {
+          let input = telefoneInput.value;
+
+          // Remove tudo que não seja número
+          input = input.replace(/\D/g, '');
+
+          // Aplica a máscara (XX) XXXXX-XXXX
+          if (input.length <= 10) {
+              // Formato para 10 dígitos (fixo antigo) - (XX) XXXX-XXXX
+              input = input.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+          } else {
+              // Formato para 11 dígitos (celular) - (XX) XXXXX-XXXX
+              input = input.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+          }
+
+          // Atualiza o valor do input
+          telefoneInput.value = input;
+      });
+
+      const form = document.getElementById('form-extensao');
+      
+      form.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        // Verifica o título
+        const titulo = document.getElementById('titulo').value.trim();
+        if (titulo.toLowerCase() === 'título') {
+            alert('O título não pode ser "Título". Por favor, insira um título válido.');
+            return;
+        }
+        
+        const dataInicio = document.getElementById('data_inicio').value;
+        const dataFim = document.getElementById('data_fim').value;
+    
+        const dataInicioObj = dayjs(dataInicio);
+        const dataFimObj = dayjs(dataFim);
+    
+        if (dataFimObj.isBefore(dataInicioObj)) {
+          alert('A data de fim deve ser posterior à data de início.');
+          return;
+        }
+    
+        let periodo = '';
+        if (!dataFim) {
+          periodo = `De ${dataInicioObj.format('DD/MM/YYYY')} até o momento atual`;
+        } else if (dataInicioObj.isSame(dataFimObj)) {
+          periodo = dataInicioObj.format('DD/MM/YYYY');
+        } else {
+          periodo = `${dataInicioObj.format('DD/MM/YYYY')} a ${dataFimObj.format('DD/MM/YYYY')}`;
+        }        
+
+        // Verifica que os campos numéricos têm valores positivos
+        const publico = document.getElementById('publico').value;
+        const estudantesGraduacao = document.getElementById('estudantes-graduacao').value;
+        const estudantesPosGraduacao = document.getElementById('estudantes-posgraduacao').value;
+
+        if (publico <= 0 || estudantesGraduacao < 0 || estudantesPosGraduacao < 0) {
+          alert('Os valores para público e estudantes devem ser positivos.');
+          return;
+        }
+
+        // Verifica se "Projeto de Prestação de Serviço" foi selecionado sem escolher uma modalidade
+        const tipoExtensao = document.getElementById('tipo-extensao').value;
+        const modalidadeInputs = document.getElementsByName('modalidade');
+        const modalidadeSelecionada = Array.from(modalidadeInputs).some(input => input.checked);
+
+        if (tipoExtensao === 'Projeto de Prestação de serviço' && !modalidadeSelecionada) {
+            alert('Por favor, escolha uma das opções de modalidade.');
+            return;
+        }
+        // Verifica a seleção de latitude e longitude
+        if (typeof latitude === 'undefined' || typeof longitude === 'undefined') {
+            alert('Por favor, selecione uma localização no mapa antes de enviar.');
+            return;
+        }
+
+        // Cria FormData e ajusta latitude e longitude
+        const formData = new FormData(form);
+        // 8 casas decimais
+        latitude = latitude.toFixed(8);
+        longitude = longitude.toFixed(8); 
+        formData.append('latitude', latitude);
+        formData.append('longitude', longitude);
+        formData.append('periodo', periodo);
+
+        //log dos dados
+        for (var pair of formData.entries()) {
+            console.log(pair[0]+ ', ' + pair[1]); 
+        }
+
+        // Envia os dados
+        enviarDados(formData);
+      });
+    });
+
+  </script>
+
+  <form action="#" method="post" id="form-extensao">
+    <label for="tipo-extensao">Tipo de Extensão</label>
+    <select id="tipo-extensao" name="tipo-de-extensao" required>
+      <option value="Programa de Extensão">Programa de Extensão</option>
+      <option value="Projeto de Extensão">Projeto de Extensão</option>
+      <option value="Projeto de Prestação de serviço">Projeto de Prestação de Serviço</option>
+      <option value="Curso de Extensão">Curso de Extensão</option>
+      <option value="Evento de Extensão">Evento de Extensão</option>
+    </select>
+
+    <label for="titulo">Título</label>
+    <input type="text" id="titulo" name="titulo" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
+
+    <label for="acao">Ação</label>
+    <input type="text" id="acao" name="acao" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
+
+    <label for="docentes">Docente(s)</label>
+    <input type="text" id="docentes" name="docentes" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
+
+    <label for="telefone">Telefone Responsável</label>
+    <p>OBS: Será usado apenas para confirmação e não aparecerá no mapa</p>
+    <input type="text" id="telefone" name="telefone" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')" placeholder="(XX) XXXXX-XXXX" maxlength="15">
+
+    <label for="publico">Quantidade de pessoas atentidas ou participantes da ação</label>
+    <input type="number" id="publico" name="publico" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
+
+    <label for="estudantes-graduacao">Número de estudantes de graduação envolvidos</label>
+    <input type="number" id="estudantes-graduacao" name="estudantes-graduacao" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
+
+    <label for="estudantes-posgraduacao">Número de estudantes de pós-graduação envolvidos</label>
+    <input type="number" id="estudantes-posgraduacao" name="estudantes-posgraduacao" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
+
+    <label for="descricao">Descrição</label>
+    <p>Limite de 300 caracteres</p>
+    <textarea id="descricao" name="descricao" maxlength="300" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')"></textarea>
+    
+    <label for="data_inicio">Data de Início</label>
+    <input type="date" id="data_inicio" name="data_inicio" required oninvalid="this.setCustomValidity('Por favor, selecione uma data de início')" oninput="this.setCustomValidity('')">
+    
+    <label for="data_fim">Data de Fim</label>
+    <p>OBS: Coloque se houver a previsão de término ou se já tiver sido concluido, caso contrário, deixe em branco.</p>
+    <input type="date" id="data_fim" name="data_fim">
+
+    <div id="modalidade-section" style="display:none;">
+      <label for="modalidade">Modalidade</label>
+      <input type="radio" name="modalidade" value="PAS"> PAS
+      <input type="radio" name="modalidade" value="PEPE"> PEPE
+    </div>
+
+    <label>Selecione o local no mapa:</label>
+    <div id="map"></div>
+
+    <button type="submit">Enviar Formulário</button>
+
+  </form>
+</body>
+</html>
