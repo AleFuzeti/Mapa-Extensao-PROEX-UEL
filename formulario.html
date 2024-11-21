@@ -113,7 +113,7 @@
       var modalidadeInputs = document.getElementsByName('modalidade');
       
       tipoExtensao.addEventListener('change', function () {
-        if (tipoExtensao.value === 'Projeto de Prestação de serviço') {
+        if (tipoExtensao.value === 'Projeto de Prestação de Serviço') {
           modalidadeSection.style.display = 'block';
         } else {
           modalidadeSection.style.display = 'none';
@@ -258,7 +258,7 @@
         const modalidadeInputs = document.getElementsByName('modalidade');
         const modalidadeSelecionada = Array.from(modalidadeInputs).some(input => input.checked);
 
-        if (tipoExtensao === 'Projeto de Prestação de serviço' && !modalidadeSelecionada) {
+        if (tipoExtensao === 'Projeto de Prestação de Serviço' && !modalidadeSelecionada) {
             alert('Por favor, escolha uma das opções de modalidade.');
             return;
         }
@@ -294,7 +294,7 @@
     <select id="tipo-extensao" name="tipo-de-extensao" required>
       <option value="Programa de Extensão">Programa de Extensão</option>
       <option value="Projeto de Extensão">Projeto de Extensão</option>
-      <option value="Projeto de Prestação de serviço">Projeto de Prestação de Serviço</option>
+      <option value="Projeto de Prestação de Serviço">Projeto de Prestação de Serviço</option>
       <option value="Curso de Extensão">Curso de Extensão</option>
       <option value="Evento de Extensão">Evento de Extensão</option>
     </select>
