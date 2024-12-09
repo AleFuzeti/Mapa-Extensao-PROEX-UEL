@@ -294,7 +294,7 @@
     <select id="tipo-extensao" name="tipo-de-extensao" required>
       <option value="Programa de Extensão">Programa de Extensão</option>
       <option value="Projeto de Extensão">Projeto de Extensão</option>
-      <option value="Projeto de Prestação de Serviço">Projeto de Prestação de Serviço</option>
+      <option value="Projeto de Prestação de Serviço">PAS ou PEPE</option>
       <option value="Curso de Extensão">Curso de Extensão</option>
       <option value="Evento de Extensão">Evento de Extensão</option>
     </select>
@@ -305,14 +305,15 @@
     <label for="acao">Ação</label>
     <input type="text" id="acao" name="acao" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
 
-    <label for="docentes">Docente(s)</label>
+    <label for="docentes">Docente ou técnico responsável pela ação</label>
     <input type="text" id="docentes" name="docentes" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
 
     <label for="telefone">Telefone Responsável</label>
     <p>OBS: Será usado apenas para confirmação e não aparecerá no mapa</p>
     <input type="text" id="telefone" name="telefone" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')" placeholder="(XX) XXXXX-XXXX" maxlength="15">
 
-    <label for="publico">Quantidade de pessoas atentidas ou participantes da ação</label>
+    <label for="publico">Benefícios compartilhados</label>
+    <p>Quantidade de pessoas atentidas ou participantes da ação</p>
     <input type="number" id="publico" name="publico" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
 
     <label for="estudantes-graduacao">Número de estudantes de graduação envolvidos</label>
@@ -321,7 +322,7 @@
     <label for="estudantes-posgraduacao">Número de estudantes de pós-graduação envolvidos</label>
     <input type="number" id="estudantes-posgraduacao" name="estudantes-posgraduacao" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
 
-    <label for="descricao">Descrição</label>
+    <label for="descricao">Descrição da Ação</label>
     <p>Limite de 300 caracteres</p>
     <textarea id="descricao" name="descricao" maxlength="300" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')"></textarea>
     
@@ -338,7 +339,7 @@
       <input type="radio" name="modalidade" value="PEPE"> PEPE
     </div>
 
-    <label>Selecione o local no mapa:</label>
+    <label>Selecione o local no mapa onde a Ação ocorre ou ocorreu:</label>
     <div id="map"></div>
 
     <button type="submit">Enviar Formulário</button>
