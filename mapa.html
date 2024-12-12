@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa de Extensão</title>
+  <style>
+    #map-container {
+      position: relative;
+      width: 800px; /* Largura do mapa */
+      height: 600px; /* Altura do mapa */
+      border: 1px solid #ccc;
+      overflow: hidden;
+    }
+    #map {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .marker {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: red;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mapa de Extensão</h1>
+  <div id="map-container">
+    <img id="map" src="https://upload.wikimedia.org/wikipedia/commons/8/87/Mapa_do_Brasil.png" alt="Mapa do Brasil">
+  </div>
+
+  <script>
+    // URL do arquivo JSON no Google Drive usando proxy (AllOrigins)
+    const fileUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://drive.google.com/uc?export=download&id=1suzyP7SBb8prEN4QNOqy6vdug0mFmiey');
+
+    // Container do mapa
+    const mapContainer = document.getElementById('map-container');
+
+    // Função para adicionar um marcador no mapa
+    function addMarker(lat, lng, title) {
+      const marker = document.createElement('div');
+      marker.className = 'marker';
+      marker.title = title;
+
+      // Converte coordenadas (latitude, longitude) para pixels no mapa
+      const x = (lng + 74) * 10; // Ajuste do fator de escala
+      const y = (lat * -10) + 200; // Ajuste do fator de escala
+
+      // Define a posição do marcador
+      marker.style.left = `${x}px`;
+      marker.style.top = `${y}px`;
+
+      // Adiciona o marcador ao container do mapa
+      mapContainer.appendChild(marker);
+    }
+
+    // Carrega os dados do JSON
+    fetch(fileUrl)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Erro ao carregar o arquivo JSON');
+        }
+        return response.json();
+      })
+      .then(responseData => {
+        // Decodifica o conteúdo em caso de base64
+        const decodedContent = atob(responseData.contents);
+        const data = JSON.parse(decodedContent);
+
+        // Adiciona marcadores ao mapa
+        data.forEach(item => {
+          const { latitude, longitude, titulo } = item;
+          if (latitude && longitude) {
+            addMarker(latitude, longitude, titulo);
+          }
+        });
+      })
+      .catch(error => console.error('Erro ao carregar os dados:', error));
+  </script>
+</body>
+</html>

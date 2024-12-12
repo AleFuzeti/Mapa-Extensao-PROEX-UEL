@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,10 +18,15 @@
       background-color: #f9f9f9;
       font-family: Arial, sans-serif;
     }
-     @media (min-width: 992px) {
-        .pagina ul, .noticia ul, .pagina ol, .noticia ol {
-            padding: 0;
-        }
+
+    @media (min-width: 992px) {
+
+      .pagina ul,
+      .noticia ul,
+      .pagina ol,
+      .noticia ol {
+        padding: 0;
+      }
     }
 
     #form-extensao p {
@@ -34,6 +40,7 @@
       font-weight: bold;
       color: #00753b;
     }
+
     /* Estilos para os campos de entrada */
     #form-extensao input[type="text"],
     #form-extensao input[type="number"],
@@ -49,8 +56,9 @@
       background-color: #fff;
       color: #333;
     }
-    #form-extensao input[type="date"]{
-        width: auto;
+
+    #form-extensao input[type="date"] {
+      width: auto;
     }
 
     /* Estilos específicos para textarea */
@@ -58,6 +66,7 @@
       resize: vertical;
       min-height: 100px;
     }
+
     /* Estilos para o botão */
     #form-extensao button[type="submit"] {
       width: 100%;
@@ -71,17 +80,21 @@
       transition: background-color 0.3s ease;
       margin-top: 10px;
     }
+
     #form-extensao button[type="submit"]:hover {
       background-color: #005c2f;
     }
+
     /* Estilos para os inputs de rádio */
     #form-extensao input[type="radio"] {
       margin-right: 10px;
     }
+
     /* Alinhamento do campo Modalidade */
     #modalidade-section {
       margin-bottom: 20px;
     }
+
     /* Estilos para o mapa */
     #map {
       height: 300px;
@@ -89,29 +102,35 @@
       margin-bottom: 15px;
       border: 1px solid #ccc;
     }
+
     /* Responsividade para telas menores */
     @media (max-width: 768px) {
       #form-extensao {
         padding: 15px;
       }
+
       #form-extensao button[type="submit"] {
         font-size: 14px;
       }
     }
   </style>
 </head>
+
 <body>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+
   <script>
-    let latitude, longitude, marker;
+    let map;
+    let markers = [];
+    let locations = [];
 
     document.addEventListener('DOMContentLoaded', function () {
       var tipoExtensao = document.getElementById('tipo-extensao');
       var modalidadeSection = document.getElementById('modalidade-section');
       var modalidadeInputs = document.getElementsByName('modalidade');
-      
+
       tipoExtensao.addEventListener('change', function () {
         if (tipoExtensao.value === 'Projeto de Prestação de Serviço') {
           modalidadeSection.style.display = 'block';
@@ -125,8 +144,8 @@
     });
 
     function initMap() {
-      const map = L.map('map').setView([-23.2927, -51.1732], 12); // Londrina
-
+      map = L.map('map').setView([-23.2927, -51.1732], 12); // Londrina
+      
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19
       }).addTo(map);
@@ -134,36 +153,66 @@
       // Adiciona a funcionalidade de pesquisa
       L.Control.geocoder({
         defaultMarkGeocode: false
-      }).on('markgeocode', function(e) {
+      }).on('markgeocode', function (e) {
         const latlng = e.geocode.center;
-        map.setView(latlng, 15);
+        let latitude = latlng.lat;
+        let longitude = latlng.lng;
+
+        // Ajusta as latitudes e longitudes para 8 casas decimais
+        latitude = latitude.toFixed(8);
+        longitude = longitude.toFixed(8);
+
+        map.setView([latitude, longitude], 16);
 
         // Adiciona um marcador na posição pesquisada
-        if (marker) {
-          map.removeLayer(marker);
-        }
-        marker = L.marker(latlng).addTo(map)
-          .bindPopup(e.geocode.name)
+        const marker = L.marker([latitude, longitude]).addTo(map)
+          .bindPopup(`
+            <div style="text-align: center; gap: 5px; display: grid;">
+              <p>Localização selecionada</p>
+              <button onclick="cancelarLocalizacao(event, ${latitude}, ${longitude}, this)">Remover</button>
+            </div>
+          `)
           .openPopup();
 
-        latitude = latlng.lat;
-        longitude = latlng.lng;
+        markers.push(marker);
+        locations.push({ latitude, longitude });
       }).addTo(map);
 
       // Adiciona um listener para capturar o clique no mapa e adicionar o marcador
       map.on('click', (event) => {
-        latitude = event.latlng.lat;
-        longitude = event.latlng.lng;
+        let latitude = event.latlng.lat;
+        let longitude = event.latlng.lng;
+        // Ajusta as latitudes e longitudes para 8 casas decimais
+        latitude = latitude.toFixed(8);
+        longitude = longitude.toFixed(8);
 
-        if (marker) {
-          map.removeLayer(marker);
-        }
-
-        marker = L.marker([latitude, longitude]).addTo(map)
-          .bindPopup(`Localização selecionada`)
+        const marker = L.marker([latitude, longitude]).addTo(map)
+          .bindPopup(`
+            <div style="text-align: center; gap: 5px; display: grid;">
+              <p>Localização selecionada</p>
+              <button onclick="cancelarLocalizacao(event, ${latitude}, ${longitude}, this)">Remover</button>
+            </div>
+          `)
           .openPopup();
+
+        markers.push(marker);
+        locations.push({ latitude, longitude });
       });
     }
+
+    function cancelarLocalizacao(event, latitude, longitude, button) {
+      // Impede o comportamento padrão do botão
+      event.preventDefault();
+    
+      const markerIndex = locations.findIndex(loc => loc.latitude == latitude && loc.longitude == longitude);
+      if (markerIndex !== -1) {
+        map.removeLayer(markers[markerIndex]);
+        markers.splice(markerIndex, 1);
+        locations.splice(markerIndex, 1);
+      }
+    }
+
+    
 
     // Função que envia dados para o Google Sheets via Google Apps Script
     function enviarDados(formData) {
@@ -178,62 +227,68 @@
         },
         body: formBody
       })
-      .then(response => response.text())
-      .then(result => {
-        console.log('Sucesso:', result);
-        alert('Formulário enviado com sucesso! Obrigado por contribuir :)');
-      })
-      .catch(error => {
-        console.error('Erro:', error);
-        alert('Erro ao enviar o formulário.');
-      });
+        .then(response => response.text())
+        .then(result => {
+          console.log('Sucesso:', result);
+        });
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const telefoneInput = document.getElementById('telefone');
 
-      telefoneInput.addEventListener('input', function(event) {
-          let input = telefoneInput.value;
+      telefoneInput.addEventListener('input', function (event) {
+        let input = telefoneInput.value;
 
-          // Remove tudo que não seja número
-          input = input.replace(/\D/g, '');
+        // Remove tudo que não seja número
+        input = input.replace(/\D/g, '');
 
-          // Aplica a máscara (XX) XXXXX-XXXX
-          if (input.length <= 10) {
-              // Formato para 10 dígitos (fixo antigo) - (XX) XXXX-XXXX
-              input = input.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
-          } else {
-              // Formato para 11 dígitos (celular) - (XX) XXXXX-XXXX
-              input = input.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
-          }
+        // Aplica a máscara (XX) XXXXX-XXXX
+        if (input.length <= 10) {
+          // Formato para 10 dígitos (fixo antigo) - (XX) XXXX-XXXX
+          input = input.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+        } else {
+          // Formato para 11 dígitos (celular) - (XX) XXXXX-XXXX
+          input = input.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+        }
 
-          // Atualiza o valor do input
-          telefoneInput.value = input;
+        // Atualiza o valor do input
+        telefoneInput.value = input;
+      });
+
+      document.addEventListener('input', function (event) {
+        const descricaoInput = document.getElementById('descricao');
+        const contador = document.getElementById('contador');
+        const maxLength = descricaoInput.maxLength;
+        const currentLength = descricaoInput.value.length;
+        const remaining = maxLength - currentLength;
+
+        contador.textContent = `(${remaining} restantes)`;
       });
 
       const form = document.getElementById('form-extensao');
-      
-      form.addEventListener('submit', function(event) {
+
+      form.addEventListener('submit', function (event) {
         event.preventDefault();
 
         // Verifica o título
         const titulo = document.getElementById('titulo').value.trim();
         if (titulo.toLowerCase() === 'título') {
-            alert('O título não pode ser "Título". Por favor, insira um título válido.');
-            return;
+          alert('O título não pode ser "Título". Por favor, insira um título válido.');
+          return;
         }
-        
+
+        // verifica e formata as datas
         const dataInicio = document.getElementById('data_inicio').value;
         const dataFim = document.getElementById('data_fim').value;
-    
+
         const dataInicioObj = dayjs(dataInicio);
         const dataFimObj = dayjs(dataFim);
-    
+
         if (dataFimObj.isBefore(dataInicioObj)) {
           alert('A data de fim deve ser posterior à data de início.');
           return;
         }
-    
+
         let periodo = '';
         if (!dataFim) {
           periodo = `De ${dataInicioObj.format('DD/MM/YYYY')} até o momento atual`;
@@ -241,7 +296,7 @@
           periodo = dataInicioObj.format('DD/MM/YYYY');
         } else {
           periodo = `${dataInicioObj.format('DD/MM/YYYY')} a ${dataFimObj.format('DD/MM/YYYY')}`;
-        }        
+        }
 
         // Verifica que os campos numéricos têm valores positivos
         const publico = document.getElementById('publico').value;
@@ -259,31 +314,32 @@
         const modalidadeSelecionada = Array.from(modalidadeInputs).some(input => input.checked);
 
         if (tipoExtensao === 'Projeto de Prestação de Serviço' && !modalidadeSelecionada) {
-            alert('Por favor, escolha uma das opções de modalidade.');
-            return;
-        }
-        // Verifica a seleção de latitude e longitude
-        if (typeof latitude === 'undefined' || typeof longitude === 'undefined') {
-            alert('Por favor, selecione uma localização no mapa antes de enviar.');
-            return;
+          alert('Por favor, escolha uma das opções de modalidade.');
+          return;
         }
 
-        // Cria FormData e ajusta latitude e longitude
-        const formData = new FormData(form);
-        // 8 casas decimais
-        latitude = latitude.toFixed(8);
-        longitude = longitude.toFixed(8); 
-        formData.append('latitude', latitude);
-        formData.append('longitude', longitude);
-        formData.append('periodo', periodo);
-
-        //log dos dados
-        for (var pair of formData.entries()) {
-            console.log(pair[0]+ ', ' + pair[1]); 
+        // verifica se tem alguma localização selecionada
+        if (locations.length === 0) {
+          alert('Por favor, selecione uma localização no mapa.');
+          return;
         }
 
-        // Envia os dados
-        enviarDados(formData);
+        // cria uma linha para cada latitude e longitude
+        locations.forEach((location) => {
+          const formData = new FormData(form);
+          formData.append(`latitude`, location.latitude);
+          formData.append(`longitude`, location.longitude);
+          formData.append(`periodo`, periodo);
+          //log dos dados
+          for (var pair of formData.entries()) {
+            //console.log(pair[0]+ ', ' + pair[1]); 
+          }
+          //console.log(formData);
+          // envia os dados
+          enviarDados(formData); 
+        });
+        alert('Formulário enviado com sucesso, obrigado por contribuir!');
+
       });
     });
 
@@ -300,35 +356,47 @@
     </select>
 
     <label for="titulo">Título</label>
-    <input type="text" id="titulo" name="titulo" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
+    <input type="text" id="titulo" name="titulo" required
+      oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
 
     <label for="acao">Ação</label>
-    <input type="text" id="acao" name="acao" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
+    <input type="text" id="acao" name="acao" required
+      oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
 
     <label for="docentes">Docente ou técnico responsável pela ação</label>
-    <input type="text" id="docentes" name="docentes" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
+    <input type="text" id="docentes" name="docentes" required
+      oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
 
     <label for="telefone">Telefone Responsável</label>
     <p>OBS: Será usado apenas para confirmação e não aparecerá no mapa</p>
-    <input type="text" id="telefone" name="telefone" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')" placeholder="(XX) XXXXX-XXXX" maxlength="15">
+    <input type="text" id="telefone" name="telefone" required
+      oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')"
+      placeholder="(XX) XXXXX-XXXX" maxlength="15">
 
     <label for="publico">Benefícios compartilhados</label>
-    <p>Quantidade de pessoas atentidas ou participantes da ação</p>
-    <input type="number" id="publico" name="publico" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
+    <p>Quantidade de pessoas atendidas ou participantes da ação</p>
+    <input type="number" id="publico" name="publico" required
+      oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
 
     <label for="estudantes-graduacao">Número de estudantes de graduação envolvidos</label>
-    <input type="number" id="estudantes-graduacao" name="estudantes-graduacao" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
+    <input type="number" id="estudantes-graduacao" name="estudantes-graduacao" required
+      oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
 
     <label for="estudantes-posgraduacao">Número de estudantes de pós-graduação envolvidos</label>
-    <input type="number" id="estudantes-posgraduacao" name="estudantes-posgraduacao" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
+    <input type="number" id="estudantes-posgraduacao" name="estudantes-posgraduacao" required
+      oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')">
 
     <label for="descricao">Descrição da Ação</label>
-    <p>Limite de 300 caracteres</p>
-    <textarea id="descricao" name="descricao" maxlength="300" required oninvalid="this.setCustomValidity('Por favor, preencha esse campo')" oninput="this.setCustomValidity('')"></textarea>
-    
+    <p>Limite de 300 caracteres <span id="contador">(300 restantes)</span></p> 
+    <textarea id="descricao" name="descricao" maxlength="300" required
+      oninvalid="this.setCustomValidity('Por favor, preencha esse campo')"
+      oninput="this.setCustomValidity('')"></textarea>
+
     <label for="data_inicio">Data de Início</label>
-    <input type="date" id="data_inicio" name="data_inicio" required oninvalid="this.setCustomValidity('Por favor, selecione uma data de início')" oninput="this.setCustomValidity('')">
-    
+    <input type="date" id="data_inicio" name="data_inicio" required
+      oninvalid="this.setCustomValidity('Por favor, selecione uma data de início')"
+      oninput="this.setCustomValidity('')">
+
     <label for="data_fim">Data de Fim</label>
     <p>OBS: Coloque se houver a previsão de término ou se já tiver sido concluido, caso contrário, deixe em branco.</p>
     <input type="date" id="data_fim" name="data_fim">
@@ -339,11 +407,13 @@
       <input type="radio" name="modalidade" value="PEPE"> PEPE
     </div>
 
-    <label>Selecione o local no mapa onde a Ação ocorre ou ocorreu:</label>
+    <label>Selecione os locais no mapa onde a Ação ocorre ou ocorreu:</label>
+    <p>OBS: A pesquisa por CEP é mais precisa.</p>
     <div id="map"></div>
 
     <button type="submit">Enviar Formulário</button>
 
   </form>
 </body>
+
 </html>
